@@ -1,78 +1,164 @@
-import Image from "next/image";
-import { Geist, Geist_Mono } from "next/font/google";
+// pages/signup.tsx
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import axios from "axios";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
+// 1. Định nghĩa khuôn Validate bằng Zod theo yêu cầu trong ảnh
+const signupSchema = z
+  .object({
+    username: z.string().min(1, { message: "Username là bắt buộc" }),
+    password: z
+      .string()
+      .min(6, { message: "Mật khẩu phải từ 6 ký tự trở lên" }),
+    confirmPassword: z
+      .string()
+      .min(1, { message: "Vui lòng xác nhận lại mật khẩu" }),
+    sex: z.enum(["Nam", "Nữ", "Khác"], {
+      message: "Vui lòng chọn giới tính",
+    }),
+    email: z
+      .string()
+      .email({ message: "Email không đúng định dạng" })
+      .optional()
+      .or(z.literal("")),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Mật khẩu nhập lại không khớp",
+    path: ["confirmPassword"],
+  });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+type SignupFormType = z.infer<typeof signupSchema>;
 
-export default function Home() {
+export default function SignupPage() {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<SignupFormType>({
+    resolver: zodResolver(signupSchema),
+  });
+
+  const onSubmit = async (data: SignupFormType) => {
+    try {
+      // Gửi dữ liệu qua NestJS (Cổng 3000)
+      await axios.post("http://localhost:3000/api/auth/register", {
+        username: data.username,
+        password: data.password,
+        sex: data.sex,
+        email: data.email || null,
+      });
+      alert("Đăng ký tài khoản thành công!");
+    } catch (error) {
+      const errorMessage =
+        error instanceof axios.AxiosError
+          ? error.response?.data?.message
+          : "Tên tài khoản đã tồn tại hoặc có lỗi xảy ra";
+      alert(errorMessage || "Tên tài khoản đã tồn tại hoặc có lỗi xảy ra");
+    }
+  };
+
   return (
-    <div
-      className={`${geistSans.className} ${geistMono.className} flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black`}
-    >
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the index.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="flex min-h-screen items-center justify-center bg-gray-50 p-6 text-gray-800">
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        className="w-full max-w-md space-y-4 rounded-lg bg-white p-8 shadow-md"
+      >
+        <h2 className="text-2xl font-bold text-blue-600 text-center">
+          SIGNUP FORM
+        </h2>
+
+        <div>
+          <label className="block font-medium text-gray-700">Username *</label>
+          <input
+            {...register("username")}
+            className="mt-1 w-full rounded border p-2 focus:outline-blue-500"
+            placeholder="Nhập username"
+          />
+          {errors.username && (
+            <p className="mt-1 text-sm text-red-500">
+              {errors.username.message}
+            </p>
+          )}
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs/pages/getting-started?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        <div>
+          <label className="block font-medium text-gray-700">Password *</label>
+          <input
+            type="password"
+            {...register("password")}
+            className="mt-1 w-full rounded border p-2 focus:outline-blue-500"
+            placeholder="Nhập password"
+          />
+          {errors.password && (
+            <p className="mt-1 text-sm text-red-500">
+              {errors.password.message}
+            </p>
+          )}
         </div>
-      </main>
+
+        <div>
+          <label className="block font-medium text-gray-700">
+            Password again *
+          </label>
+          <input
+            type="password"
+            {...register("confirmPassword")}
+            className="mt-1 w-full rounded border p-2 focus:outline-blue-500"
+            placeholder="Nhập lại password"
+          />
+          {errors.confirmPassword && (
+            <p className="mt-1 text-sm text-red-500">
+              {errors.confirmPassword.message}
+            </p>
+          )}
+        </div>
+
+        <div>
+          <label className="block font-medium text-gray-700">Sex *</label>
+          <div className="mt-2 flex space-x-6">
+            {["Nam", "Nữ", "Khác"].map((item) => (
+              <label
+                key={item}
+                className="flex items-center space-x-2 cursor-pointer"
+              >
+                <input
+                  type="radio"
+                  value={item}
+                  {...register("sex")}
+                  className="h-4 w-4 text-blue-600"
+                />
+                <span>{item}</span>
+              </label>
+            ))}
+          </div>
+          {errors.sex && (
+            <p className="mt-1 text-sm text-red-500">{errors.sex.message}</p>
+          )}
+        </div>
+
+        <div>
+          <label className="block font-medium text-gray-700">
+            Email <span className="text-gray-400 text-xs">(optional)</span>
+          </label>
+          <input
+            {...register("email")}
+            className="mt-1 w-full rounded border p-2 focus:outline-blue-500"
+            placeholder="Nhập email"
+          />
+          {errors.email && (
+            <p className="mt-1 text-sm text-red-500">{errors.email.message}</p>
+          )}
+        </div>
+
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="w-full rounded bg-blue-600 p-2 font-semibold text-white transition hover:bg-blue-700 disabled:bg-gray-400"
+        >
+          {isSubmitting ? "Đang xử lý..." : "Đăng ký"}
+        </button>
+      </form>
     </div>
   );
 }
