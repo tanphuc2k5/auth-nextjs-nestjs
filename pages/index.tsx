@@ -3,8 +3,9 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import axios from "axios";
+// 1. IMPORT USEROUTER CỦA PAGES ROUTER
+import { useRouter } from "next/router";
 
-// 1. Định nghĩa khuôn Validate bằng Zod theo yêu cầu trong ảnh
 const signupSchema = z
   .object({
     username: z.string().min(1, { message: "Username là bắt buộc" }),
@@ -31,6 +32,9 @@ const signupSchema = z
 type SignupFormType = z.infer<typeof signupSchema>;
 
 export default function SignupPage() {
+  // 2. KHỞI TẠO HOOK ROUTER BÊN TRONG COMPONENT
+  const router = useRouter();
+
   const {
     register,
     handleSubmit,
@@ -41,14 +45,18 @@ export default function SignupPage() {
 
   const onSubmit = async (data: SignupFormType) => {
     try {
-      // Gửi dữ liệu qua NestJS (Cổng 3000)
-      await axios.post("http://localhost:3000/api/auth/register", {
+      // Gửi dữ liệu qua NestJS (Cổng 3001)
+      await axios.post("http://localhost:3001/api/auth/register", {
         username: data.username,
         password: data.password,
         sex: data.sex,
         email: data.email || null,
       });
+
       alert("Đăng ký tài khoản thành công!");
+
+      // 3. ĐIỀU HƯỚNG TỰ ĐỘNG SANG TRANG ĐĂNG NHẬP
+      router.push("/login");
     } catch (error) {
       const errorMessage =
         error instanceof axios.AxiosError
