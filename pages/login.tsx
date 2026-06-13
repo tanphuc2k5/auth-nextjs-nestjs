@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import axios from "axios";
 import { useState } from "react";
+import { useRouter } from "next/router";
 
 const loginSchema = z.object({
   username: z.string().min(1, { message: "Username là bắt buộc" }),
@@ -13,6 +14,7 @@ const loginSchema = z.object({
 type LoginFormType = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
+  const router = useRouter();
   const [serverError, setServerError] = useState<string | null>(null);
 
   const {
@@ -27,7 +29,7 @@ export default function LoginPage() {
     setServerError(null);
     try {
       const response = await axios.post(
-        "http://localhost:3001/api/auth/login",
+        "http://localhost:3002/api/auth/login",
         data,
       );
 
@@ -36,6 +38,7 @@ export default function LoginPage() {
       localStorage.setItem("token", token);
 
       alert("Đăng nhập thành công!");
+      router.push("/product");
     } catch (error) {
       // Nhận và hiển thị thông báo lỗi từ NestJS gửi về nếu sai tài khoản
       if (axios.isAxiosError(error)) {

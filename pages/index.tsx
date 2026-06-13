@@ -4,7 +4,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import axios from "axios";
 // 1. IMPORT USEROUTER CỦA PAGES ROUTER
-import { useRouter } from "next/router";
+import { useRouter } from "next/router"; 
+
 
 const signupSchema = z
   .object({
@@ -46,7 +47,7 @@ export default function SignupPage() {
   const onSubmit = async (data: SignupFormType) => {
     try {
       // Gửi dữ liệu qua NestJS (Cổng 3001)
-      await axios.post("http://localhost:3001/api/auth/register", {
+      await axios.post("http://localhost:3002/api/auth/register", {
         username: data.username,
         password: data.password,
         sex: data.sex,

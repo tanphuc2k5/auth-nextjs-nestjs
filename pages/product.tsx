@@ -43,6 +43,7 @@ export default function ProductFormPage() {
     // zodResolver's inferred types can be incompatible with RHF's Resolver generic in some setups
     // cast to Resolver<ProductFormType> to satisfy the linter instead of using `any`
     resolver: zodResolver(productSchema) as Resolver<ProductFormType>,
+    mode: "onChange",
     defaultValues: {
       productName: "",
       description: "",
@@ -68,11 +69,38 @@ export default function ProductFormPage() {
     ? watchedVariants.reduce((sum, item) => sum + (Number(item?.stock) || 0), 0)
     : 0;
 
-  // 5. HÀM SUBMIT FORM
+  // 5. HÀM SUBMIT FORM (Kết nối trực tiếp tới cổng BE 3000)
   const onSubmit = async (data: ProductFormType) => {
-    // Log toàn bộ data ra console theo đúng yêu cầu số 7
-    console.log("📦 Dữ liệu khi Submit (Ví dụ):", data);
-    alert("Submit thành công! Hãy kiểm tra dữ liệu ở Console Log.");
+    try {
+      // 🌟 Lấy token trực tiếp từ localStorage ra trước khi gọi fetch
+      const storedToken = localStorage.getItem("token");
+
+      // Gọi API POST tới đúng endpoint đã mở trên Swagger của NestJS
+      const response = await fetch("http://localhost:3002/api/products", {
+        method: "POST",
+        headers: {
+          // Đính kèm token vừa lấy được vào header (dùng toán tử || chuỗi rỗng đề phòng chưa đăng nhập)
+          Authorization: `Bearer ${storedToken || ""}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data), // Nhớ đừng quên dòng chuyển dữ liệu form sang JSON này nhé!
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          alert(
+            "Phiên đăng nhập hết hạn hoặc chưa đăng nhập. Vui lòng đăng nhập lại!",
+          );
+          return;
+        }
+        throw new Error("Lỗi khi lưu sản phẩm");
+      }
+
+      alert("Lưu sản phẩm thành công!");
+    } catch (error) {
+      console.error(error);
+      alert("Không thể kết nối đến server Back-end!");
+    }
   };
 
   return (
@@ -155,7 +183,25 @@ export default function ProductFormPage() {
                 </span>
               </div>
             </div>
+            {/* ==================== HÀNG TIÊU ĐỀ  ==================== */}
+            <div className="flex gap-3 items-center p-3 pb-0 pt-1 text-xs font-bold text-gray-700 select-none">
+              <span className="w-4 text-center"></span>
 
+              <div className="flex-1 text-left pl-1">
+                Variant Name <span className="text-red-500">*</span>
+              </div>
+
+              <div className="w-28 text-left pl-1">Extra Price</div>
+
+              <div className="w-24 text-left pl-1">
+                Stock <span className="text-red-500">*</span>
+              </div>
+
+              <div className="w-8.5 text-center whitespace-nowrap">
+                Thao tác
+              </div>
+            </div>
+            {/* ====================================================================================== */}
             {/* BẢNG CHỨA BIẾN THỂ */}
             <div className="space-y-3">
               {fields.map((field, index) => (
@@ -201,8 +247,8 @@ export default function ProductFormPage() {
                         placeholder="Stock"
                         className={`w-full border rounded px-3 py-1.5 text-sm text-gray-900 outline-none ${
                           errors.variants?.[index]?.stock
-                            ? "border-red-500 bg-red-50"
-                            : "border-gray-300"
+                            ? "border-red-500 bg-red-50" // Khi có lỗi (như nhập số âm) -> Viền đỏ lập tức
+                            : "border-gray-300 focus:border-purple-500"
                         }`}
                       />
                     </div>
