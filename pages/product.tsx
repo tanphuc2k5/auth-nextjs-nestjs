@@ -76,15 +76,18 @@ export default function ProductFormPage() {
       const storedToken = localStorage.getItem("token");
 
       // Gọi API POST tới đúng endpoint đã mở trên Swagger của NestJS
-      const response = await fetch("http://localhost:3002/api/products", {
-        method: "POST",
-        headers: {
-          // Đính kèm token vừa lấy được vào header (dùng toán tử || chuỗi rỗng đề phòng chưa đăng nhập)
-          Authorization: `Bearer ${storedToken || ""}`,
-          "Content-Type": "application/json",
+      const response = await fetch(
+        "https://be-nestjs-auth.onrender.com/api/products",
+        {
+          method: "POST",
+          headers: {
+            // Đính kèm token vừa lấy được vào header (dùng toán tử || chuỗi rỗng đề phòng chưa đăng nhập)
+            Authorization: `Bearer ${storedToken || ""}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(data), // Nhớ đừng quên dòng chuyển dữ liệu form sang JSON này nhé!
         },
-        body: JSON.stringify(data), // Nhớ đừng quên dòng chuyển dữ liệu form sang JSON này nhé!
-      });
+      );
 
       if (!response.ok) {
         if (response.status === 401) {

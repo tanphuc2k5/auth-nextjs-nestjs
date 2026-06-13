@@ -29,7 +29,7 @@ export default function LoginPage() {
     setServerError(null);
     try {
       const response = await axios.post(
-        "http://localhost:3002/api/auth/login",
+        "https://be-nestjs-auth.onrender.com/api/auth/login",
         data,
       );
 
