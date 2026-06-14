@@ -40,15 +40,13 @@ export default function ProductFormPage() {
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<ProductFormType>({
-    // zodResolver's inferred types can be incompatible with RHF's Resolver generic in some setups
-    // cast to Resolver<ProductFormType> to satisfy the linter instead of using `any`
     resolver: zodResolver(productSchema) as Resolver<ProductFormType>,
     mode: "onChange",
     defaultValues: {
       productName: "",
       description: "",
       basePrice: 0,
-      variants: [{ variantName: "", extraPrice: 0, stock: 0 }], // Luôn có sẵn 1 variant ban đầu
+      variants: [{ variantName: "", extraPrice: 0, stock: 0 }],
     },
   });
 
@@ -69,23 +67,20 @@ export default function ProductFormPage() {
     ? watchedVariants.reduce((sum, item) => sum + (Number(item?.stock) || 0), 0)
     : 0;
 
-  // 5. HÀM SUBMIT FORM (Kết nối trực tiếp tới cổng BE 3000)
+  // 5. HÀM SUBMIT FORM
   const onSubmit = async (data: ProductFormType) => {
     try {
-      // 🌟 Lấy token trực tiếp từ localStorage ra trước khi gọi fetch
       const storedToken = localStorage.getItem("token");
 
-      // Gọi API POST tới đúng endpoint đã mở trên Swagger của NestJS
       const response = await fetch(
         "https://be-nestjs-auth.onrender.com/api/products",
         {
           method: "POST",
           headers: {
-            // Đính kèm token vừa lấy được vào header (dùng toán tử || chuỗi rỗng đề phòng chưa đăng nhập)
             Authorization: `Bearer ${storedToken || ""}`,
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(data), // Nhớ đừng quên dòng chuyển dữ liệu form sang JSON này nhé!
+          body: JSON.stringify(data),
         },
       );
 
@@ -107,10 +102,8 @@ export default function ProductFormPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6 flex justify-center items-center">
-      <div className="w-full max-w-3xl bg-white rounded-lg shadow p-6">
-        <h1 className="text-xl font-bold text-purple-900 mb-6 uppercase tracking-wide"></h1>
-
+    <div className="min-h-screen bg-gray-50 p-4 md:p-6 flex justify-center items-center">
+      <div className="w-full max-w-3xl bg-white rounded-lg shadow p-4 md:p-6">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
           {/* Product Name Field */}
           <div>
@@ -173,9 +166,9 @@ export default function ProductFormPage() {
 
           {/* --- DANH SÁCH VARIANTS (DYNAMIC) --- */}
           <div className="border-t pt-4">
-            <div className="flex justify-between items-center mb-3">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
               <h2 className="text-md font-bold text-gray-800">Variants</h2>
-              <div className="text-xs font-semibold space-x-4 text-purple-700">
+              <div className="text-xs font-semibold text-purple-700 space-x-2 sm:space-x-4">
                 <span>
                   Tổng variants:{" "}
                   <strong className="text-sm">{totalVariants}</strong>
@@ -186,41 +179,47 @@ export default function ProductFormPage() {
                 </span>
               </div>
             </div>
-            {/* ==================== HÀNG TIÊU ĐỀ  ==================== */}
-            <div className="flex gap-3 items-center p-3 pb-0 pt-1 text-xs font-bold text-gray-700 select-none">
-              <span className="w-4 text-center"></span>
 
+            {/* ==================== HÀNG TIÊU ĐỀ (Ẩn trên Mobile, Hiện từ màn hình MD) ==================== */}
+            <div className="hidden md:flex gap-3 items-center p-3 pb-2 pt-1 text-xs font-bold text-gray-700 select-none border-b border-gray-100">
+              <span className="w-5 text-center"></span>
               <div className="flex-1 text-left pl-1">
                 Variant Name <span className="text-red-500">*</span>
               </div>
-
               <div className="w-28 text-left pl-1">Extra Price</div>
-
               <div className="w-24 text-left pl-1">
                 Stock <span className="text-red-500">*</span>
               </div>
-
-              <div className="w-8.5 text-center whitespace-nowrap">
-                Thao tác
-              </div>
+              <div className="w-10 text-center">Xóa</div>
             </div>
+
             {/* ====================================================================================== */}
             {/* BẢNG CHỨA BIẾN THỂ */}
-            <div className="space-y-3">
+            <div className="space-y-4 md:space-y-3 mt-2">
               {fields.map((field, index) => (
                 <div key={field.id} className="space-y-1">
-                  <div className="flex items-start gap-3 bg-gray-50 p-3 rounded border border-gray-200">
-                    <span className="text-gray-400 font-bold self-center text-sm w-4">
-                      {index + 1}
-                    </span>
+                  {/* 🌟 THẺ CHA ĐÃ ĐƯỢC RESPONSIVE: flex-col trên điện thoại, flex-row trên máy tính */}
+                  <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3 bg-gray-50 p-4 md:p-3 rounded border border-gray-200 relative">
+                    {/* Số thứ tự hoặc Label Mobile */}
+                    <div className="flex justify-between items-center md:block border-b md:border-none pb-2 md:pb-0 mb-1 md:mb-0">
+                      <span className="text-purple-900 font-bold text-sm w-5">
+                        {index + 1}
+                      </span>
+                      <span className="text-xs font-bold text-gray-400 md:hidden uppercase tracking-wider">
+                        Biến thể
+                      </span>
+                    </div>
 
                     {/* Variant Name Input */}
-                    <div className="flex-1">
+                    <div className="flex-1 w-full">
+                      <label className="block text-xs font-semibold text-gray-600 mb-1 md:hidden">
+                        Variant Name *
+                      </label>
                       <input
                         type="text"
                         {...register(`variants.${index}.variantName` as const)}
                         placeholder="Tên biến thể (M - Trắng)"
-                        className={`w-full border rounded px-3 py-1.5 text-sm text-gray-950 font-medium outline-none ${
+                        className={`w-full border rounded px-3 py-1.5 text-sm text-gray-950 font-medium outline-none focus:border-purple-500 ${
                           errors.variants?.[index]?.variantName
                             ? "border-red-500 bg-red-50"
                             : "border-gray-300"
@@ -229,19 +228,25 @@ export default function ProductFormPage() {
                     </div>
 
                     {/* Extra Price Input */}
-                    <div className="w-28">
+                    <div className="w-full md:w-28">
+                      <label className="block text-xs font-semibold text-gray-600 mb-1 md:hidden">
+                        Extra Price
+                      </label>
                       <input
                         type="number"
                         {...register(`variants.${index}.extraPrice` as const, {
                           valueAsNumber: true,
                         })}
                         placeholder="Extra Price"
-                        className="w-full border border-gray-300 rounded px-3 py-1.5 text-sm text-gray-900 outline-none"
+                        className="w-full border border-gray-300 rounded px-3 py-1.5 text-sm text-gray-900 outline-none focus:border-purple-500"
                       />
                     </div>
 
                     {/* Stock Input */}
-                    <div className="w-24">
+                    <div className="w-full md:w-24">
+                      <label className="block text-xs font-semibold text-gray-600 mb-1 md:hidden">
+                        Stock *
+                      </label>
                       <input
                         type="number"
                         {...register(`variants.${index}.stock` as const, {
@@ -250,51 +255,55 @@ export default function ProductFormPage() {
                         placeholder="Stock"
                         className={`w-full border rounded px-3 py-1.5 text-sm text-gray-900 outline-none ${
                           errors.variants?.[index]?.stock
-                            ? "border-red-500 bg-red-50" // Khi có lỗi (như nhập số âm) -> Viền đỏ lập tức
+                            ? "border-red-500 bg-red-50"
                             : "border-gray-300 focus:border-purple-500"
                         }`}
                       />
                     </div>
 
                     {/* Nút Thao tác (Xóa) */}
-                    <button
-                      type="button"
-                      disabled={fields.length <= 1} // Không cho xóa khi chỉ còn 1 variant (Yêu cầu số 5)
-                      onClick={() => remove(index)}
-                      className={`p-2 rounded text-white ${
-                        fields.length <= 1
-                          ? "bg-gray-300 cursor-not-allowed"
-                          : "bg-red-500 hover:bg-red-600 transition"
-                      }`}
-                    >
-                      {/* Thùng rác biểu tượng */}
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-4 w-4"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
+                    <div className="w-full md:w-10 pt-2 md:pt-0">
+                      <button
+                        type="button"
+                        disabled={fields.length <= 1}
+                        onClick={() => remove(index)}
+                        className={`p-2 rounded text-white flex justify-center items-center w-full md:w-10 h-9 transition ${
+                          fields.length <= 1
+                            ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                            : "bg-red-500 hover:bg-red-600"
+                        }`}
                       >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                        />
-                      </svg>
-                    </button>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-4 w-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                          />
+                        </svg>
+                        <span className="text-xs font-bold ml-1 md:hidden">
+                          Xóa biến thể này
+                        </span>
+                      </button>
+                    </div>
                   </div>
 
                   {/* Hiển thị lỗi riêng biệt của từng dòng Variant */}
-                  <div className="flex gap-4 pl-7 text-[11px] text-red-500 font-medium">
+                  <div className="flex flex-col md:flex-row gap-1 md:gap-4 pl-1 md:pl-8 text-[11px] text-red-500 font-medium">
                     {errors.variants?.[index]?.variantName && (
                       <p className="flex-1">
-                        {errors.variants[index]?.variantName?.message}
+                        ⚠️ {errors.variants[index]?.variantName?.message}
                       </p>
                     )}
                     {errors.variants?.[index]?.stock && (
-                      <p className="w-full text-right pr-14">
-                        {errors.variants[index]?.stock?.message}
+                      <p className="md:w-full md:text-right md:pr-14">
+                        ⚠️ {errors.variants[index]?.stock?.message}
                       </p>
                     )}
                   </div>
@@ -308,7 +317,7 @@ export default function ProductFormPage() {
               onClick={() =>
                 append({ variantName: "", extraPrice: 0, stock: 0 })
               }
-              className="mt-3 px-4 py-1.5 border border-purple-600 text-purple-600 text-xs font-bold rounded hover:bg-purple-50 transition"
+              className="mt-4 w-full sm:w-auto px-4 py-2 border border-purple-600 text-purple-600 text-xs font-bold rounded hover:bg-purple-50 transition uppercase tracking-wide"
             >
               + Thêm variant
             </button>
